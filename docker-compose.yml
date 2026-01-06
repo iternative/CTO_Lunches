@@ -1,32 +1,32 @@
-version: '3.8'
-
-services:
-  app:
-    build: .
-    ports:
-      - "3100:3000"
-    environment:
-      - DATABASE_URL=postgresql://postgres:postgres@db:5432/rnrsvp
-      - NODE_ENV=production
-    depends_on:
-      db:
-        condition: service_healthy
-    restart: unless-stopped
-
-  db:
-    image: postgres:15-alpine
-    environment:
-      - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=postgres
-      - POSTGRES_DB=rnrsvp
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
-      interval: 5s
-      timeout: 5s
-      retries: 5
-    restart: unless-stopped
-
-volumes:
-  postgres_data:
+version: '3.8'  
+  
+services:  
+  app:  
+    build: .  
+    ports:  
+      - "3100:3000"  
+    environment:  
+      - DATABASE_URL=postgresql://postgres:postgres@db:5432/rnrsvp  
+      - NODE_ENV=production  
+    depends_on:  
+      db:  
+        condition: service_healthy  
+    restart: on-failure:10  
+  
+  db:  
+    image: postgres:15-alpine  
+    environment:  
+      - POSTGRES_USER=postgres  
+      - POSTGRES_PASSWORD=postgres  
+      - POSTGRES_DB=rnrsvp  
+    volumes:  
+      - postgres_data:/var/lib/postgresql/data  
+    healthcheck:  
+      test: ["CMD-SHELL", "pg_isready -U postgres"]  
+      interval: 2s  
+      timeout: 5s  
+      retries: 15  
+    restart: unless-stopped  
+  
+volumes:  
+  postgres_data:  
