@@ -232,7 +232,7 @@ app.get('/api/messages', async (req, res) => {
   }
 });
 
-app.get('/admin', (req, res) => {
+app.get('/ninjaadmin', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'admin.html'));
 });
 
