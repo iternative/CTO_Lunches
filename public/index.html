@@ -1,0 +1,1145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CTO Lunches Orlando</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg0: #070A12;
+      --bg1: #0B1022;
+      --glass: rgba(255,255,255,.08);
+      --glass2: rgba(255,255,255,.12);
+      --stroke: rgba(255,255,255,.14);
+      --stroke2: rgba(255,255,255,.22);
+      --txt: rgba(255,255,255,.92);
+      --muted: rgba(255,255,255,.65);
+      --muted2: rgba(255,255,255,.45);
+      --shadow: 0 20px 60px rgba(0,0,0,.55);
+      --shadow2: 0 12px 30px rgba(0,0,0,.45);
+      --radius: 18px;
+      --radius2: 14px;
+      --gap: 16px;
+      --mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, monospace;
+      --sans: 'DM Sans', ui-sans-serif, system-ui, -apple-system, sans-serif;
+      --yes: rgba(120, 255, 180, .85);
+      --yes-bg: rgba(120, 255, 180, .12);
+      --no: rgba(255, 120, 120, .85);
+      --no-bg: rgba(255, 120, 120, .10);
+      --maybe: rgba(255, 200, 120, .85);
+      --maybe-bg: rgba(255, 200, 120, .10);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    
+    body {
+      font-family: var(--sans);
+      color: var(--txt);
+      min-height: 100vh;
+      background:
+        radial-gradient(1200px 700px at 15% 10%, rgba(120,150,255,.22), transparent 60%),
+        radial-gradient(900px 600px at 80% 20%, rgba(160,90,255,.16), transparent 55%),
+        radial-gradient(900px 700px at 30% 90%, rgba(70,220,210,.12), transparent 55%),
+        linear-gradient(180deg, var(--bg0), var(--bg1));
+      background-attachment: fixed;
+    }
+
+    .glass {
+      border: 1px solid var(--stroke);
+      border-radius: var(--radius);
+      background: linear-gradient(180deg, rgba(255,255,255,.10), rgba(255,255,255,.06));
+      backdrop-filter: blur(14px);
+      box-shadow: var(--shadow2);
+    }
+
+    .glass--soft {
+      background: linear-gradient(180deg, rgba(255,255,255,.08), rgba(255,255,255,.04));
+    }
+
+    /* Header */
+    .header {
+      padding: 24px;
+      text-align: center;
+      border-bottom: 1px solid var(--stroke);
+    }
+
+    .header h1 {
+      font-size: 2.5rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      background: linear-gradient(135deg, #fff 0%, rgba(255,255,255,.7) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 8px;
+    }
+
+    .header .subtitle {
+      font-family: var(--mono);
+      font-size: 13px;
+      color: var(--muted2);
+      letter-spacing: 0.5px;
+    }
+
+    /* Location Banner */
+    .location-banner {
+      margin: 24px;
+      padding: 20px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 32px;
+      flex-wrap: wrap;
+    }
+
+    .location-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .location-icon {
+      width: 42px;
+      height: 42px;
+      border-radius: 14px;
+      background: radial-gradient(circle at 30% 30%, rgba(255,255,255,.25), rgba(255,255,255,.08) 55%);
+      border: 1px solid var(--stroke2);
+      display: grid;
+      place-items: center;
+      font-size: 18px;
+    }
+
+    .location-label {
+      font-family: var(--mono);
+      font-size: 10px;
+      color: var(--muted2);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .location-value {
+      font-weight: 600;
+      font-size: 14px;
+      margin-top: 2px;
+    }
+
+    /* Main Layout */
+    .main-container {
+      display: grid;
+      grid-template-columns: 380px 1fr;
+      gap: 24px;
+      padding: 24px;
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+
+    @media (max-width: 1024px) {
+      .main-container {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    /* Calendar */
+    .calendar-section {
+      padding: 20px;
+    }
+
+    .calendar-nav {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 20px;
+    }
+
+    .calendar-title {
+      font-weight: 700;
+      font-size: 18px;
+    }
+
+    .nav-btn {
+      width: 40px;
+      height: 40px;
+      border-radius: 12px;
+      border: 1px solid var(--stroke);
+      background: rgba(0,0,0,.18);
+      color: var(--txt);
+      cursor: pointer;
+      display: grid;
+      place-items: center;
+      font-size: 18px;
+      transition: transform .15s ease, border-color .15s ease;
+    }
+
+    .nav-btn:hover {
+      transform: translateY(-1px);
+      border-color: var(--stroke2);
+    }
+
+    .calendar-grid {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 4px;
+    }
+
+    .calendar-day-header {
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--muted2);
+      text-align: center;
+      padding: 8px 0;
+    }
+
+    .calendar-day {
+      aspect-ratio: 1;
+      display: grid;
+      place-items: center;
+      font-size: 14px;
+      border-radius: 12px;
+      color: var(--muted);
+      position: relative;
+    }
+
+    .calendar-day.other-month {
+      color: var(--muted2);
+      opacity: 0.4;
+    }
+
+    .calendar-day.today {
+      background: var(--glass);
+      color: var(--txt);
+    }
+
+    .calendar-day.second-wednesday {
+      background: linear-gradient(135deg, rgba(120,150,255,.3), rgba(160,90,255,.2));
+      border: 1px solid rgba(120,150,255,.4);
+      color: #fff;
+      font-weight: 600;
+      cursor: pointer;
+      transition: transform .15s ease, box-shadow .15s ease;
+    }
+
+    .calendar-day.second-wednesday:hover {
+      transform: scale(1.08);
+      box-shadow: 0 8px 24px rgba(120,150,255,.3);
+    }
+
+    .calendar-day.second-wednesday.selected {
+      background: linear-gradient(135deg, rgba(120,150,255,.5), rgba(160,90,255,.4));
+      box-shadow: 0 0 0 3px rgba(120,150,255,.3);
+    }
+
+    .calendar-day.second-wednesday::after {
+      content: '';
+      position: absolute;
+      bottom: 4px;
+      width: 6px;
+      height: 6px;
+      background: rgba(255,255,255,.7);
+      border-radius: 50%;
+    }
+
+    /* Content Panel */
+    .content-panel {
+      padding: 20px;
+    }
+
+    .panel-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    .panel-title {
+      font-weight: 700;
+      font-size: 16px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .panel-actions {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .btn {
+      border: 1px solid var(--stroke);
+      background: linear-gradient(180deg, rgba(255,255,255,.10), rgba(255,255,255,.05));
+      color: var(--txt);
+      border-radius: 14px;
+      padding: 10px 16px;
+      font-size: 13px;
+      font-family: var(--sans);
+      cursor: pointer;
+      transition: transform .15s ease, border-color .15s ease;
+      white-space: nowrap;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .btn:hover {
+      transform: translateY(-1px);
+      border-color: var(--stroke2);
+    }
+
+    .btn--soft {
+      background: rgba(0,0,0,.18);
+    }
+
+    .btn--primary {
+      background: linear-gradient(135deg, rgba(120,150,255,.25), rgba(160,90,255,.2));
+      border-color: rgba(120,150,255,.4);
+    }
+
+    /* Participant List */
+    .participant-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .participant-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 16px;
+      border: 1px solid var(--stroke);
+      border-radius: var(--radius2);
+      background: radial-gradient(circle at 20% 10%, rgba(255,255,255,.10), rgba(255,255,255,.04) 55%, rgba(0,0,0,.08));
+      transition: border-color .15s ease;
+    }
+
+    .participant-item:hover {
+      border-color: var(--stroke2);
+    }
+
+    .participant-name {
+      font-weight: 600;
+      font-size: 14px;
+    }
+
+    .participant-meta {
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--muted2);
+      margin-top: 2px;
+    }
+
+    .rsvp-buttons {
+      display: flex;
+      gap: 6px;
+    }
+
+    .rsvp-btn {
+      width: 36px;
+      height: 36px;
+      border-radius: 10px;
+      border: 1px solid var(--stroke);
+      background: rgba(0,0,0,.14);
+      color: var(--muted);
+      cursor: pointer;
+      display: grid;
+      place-items: center;
+      font-size: 14px;
+      transition: all .15s ease;
+    }
+
+    .rsvp-btn:hover {
+      transform: translateY(-1px);
+      border-color: var(--stroke2);
+    }
+
+    .rsvp-btn.yes {
+      background: var(--yes-bg);
+      border-color: rgba(120, 255, 180, .3);
+      color: var(--yes);
+    }
+
+    .rsvp-btn.no {
+      background: var(--no-bg);
+      border-color: rgba(255, 120, 120, .3);
+      color: var(--no);
+    }
+
+    .rsvp-btn.maybe {
+      background: var(--maybe-bg);
+      border-color: rgba(255, 200, 120, .3);
+      color: var(--maybe);
+    }
+
+    .participant-item.status-yes {
+      background: linear-gradient(90deg, var(--yes-bg), transparent 60%);
+      border-color: rgba(120, 255, 180, .25);
+    }
+
+    .participant-item.status-no {
+      background: linear-gradient(90deg, var(--no-bg), transparent 60%);
+      border-color: rgba(255, 120, 120, .25);
+    }
+
+    .participant-item.status-maybe {
+      background: linear-gradient(90deg, var(--maybe-bg), transparent 60%);
+      border-color: rgba(255, 200, 120, .25);
+    }
+
+    /* Empty State */
+    .empty-state {
+      text-align: center;
+      padding: 40px 20px;
+      color: var(--muted2);
+    }
+
+    .empty-state-icon {
+      font-size: 48px;
+      margin-bottom: 16px;
+      opacity: 0.5;
+    }
+
+    /* Modal */
+    .backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,.65);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 18px;
+      z-index: 50;
+    }
+
+    .backdrop.is-open {
+      display: flex;
+    }
+
+    .modal {
+      width: min(560px, 98vw);
+      border-radius: 22px;
+      overflow: hidden;
+      max-height: 90vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .modal-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 20px;
+      border-bottom: 1px solid rgba(255,255,255,.10);
+    }
+
+    .modal-title {
+      font-weight: 700;
+      font-size: 15px;
+      letter-spacing: .2px;
+    }
+
+    .modal-body {
+      padding: 20px;
+      overflow-y: auto;
+    }
+
+    .modal-foot {
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+      padding: 16px 20px;
+      border-top: 1px solid rgba(255,255,255,.10);
+    }
+
+    .close-btn {
+      width: 34px;
+      height: 34px;
+      border-radius: 12px;
+      border: 1px solid var(--stroke);
+      background: rgba(0,0,0,.14);
+      color: var(--txt);
+      cursor: pointer;
+      display: grid;
+      place-items: center;
+      font-size: 18px;
+      transition: transform .15s ease;
+    }
+
+    .close-btn:hover {
+      transform: translateY(-1px);
+      border-color: var(--stroke2);
+    }
+
+    /* Form Fields */
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+
+    .field:last-child {
+      margin-bottom: 0;
+    }
+
+    label {
+      font-size: 11px;
+      color: var(--muted2);
+      font-family: var(--mono);
+      letter-spacing: .25px;
+      text-transform: uppercase;
+    }
+
+    input, textarea, select {
+      border: 1px solid var(--stroke);
+      background: rgba(0,0,0,.16);
+      color: var(--txt);
+      border-radius: 14px;
+      padding: 12px 14px;
+      outline: 0;
+      font-size: 14px;
+      font-family: var(--sans);
+      min-height: 44px;
+      transition: border-color .15s ease;
+    }
+
+    input:focus, textarea:focus, select:focus {
+      border-color: rgba(120,150,255,.5);
+    }
+
+    textarea {
+      min-height: 100px;
+      resize: vertical;
+    }
+
+    /* Agenda List */
+    .agenda-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-top: 16px;
+    }
+
+    .agenda-item {
+      padding: 14px 16px;
+      border: 1px solid var(--stroke);
+      border-radius: var(--radius2);
+      background: rgba(0,0,0,.12);
+    }
+
+    .agenda-text {
+      font-size: 14px;
+      line-height: 1.5;
+    }
+
+    .agenda-meta {
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--muted2);
+      margin-top: 8px;
+    }
+
+    /* Toast */
+    .toast {
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%) translateY(100px);
+      background: rgba(0,0,0,.45);
+      border: 1px solid rgba(255,255,255,.18);
+      backdrop-filter: blur(14px);
+      padding: 14px 20px;
+      border-radius: 14px;
+      color: rgba(255,255,255,.95);
+      font-size: 13px;
+      z-index: 60;
+      box-shadow: 0 16px 40px rgba(0,0,0,.45);
+      opacity: 0;
+      transition: all .3s ease;
+    }
+
+    .toast.is-show {
+      transform: translateX(-50%) translateY(0);
+      opacity: 1;
+    }
+
+    /* Badge */
+    .badge {
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--muted);
+      padding: 3px 10px;
+      border-radius: 999px;
+      border: 1px solid var(--stroke);
+      background: rgba(0,0,0,.12);
+    }
+
+    /* Selected Date Display */
+    .selected-date-display {
+      font-family: var(--mono);
+      font-size: 12px;
+      color: var(--muted);
+      padding: 8px 14px;
+      border: 1px solid var(--stroke);
+      border-radius: 10px;
+      background: rgba(0,0,0,.12);
+    }
+
+    /* No participants message */
+    .no-participants {
+      text-align: center;
+      padding: 60px 20px;
+      color: var(--muted2);
+    }
+
+    .no-participants p {
+      margin-bottom: 20px;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .header h1 {
+        font-size: 1.8rem;
+      }
+
+      .location-banner {
+        flex-direction: column;
+        gap: 16px;
+      }
+
+      .panel-header {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+
+      .panel-actions {
+        width: 100%;
+      }
+
+      .panel-actions .btn {
+        flex: 1;
+        justify-content: center;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header class="header">
+    <h1>CTO Lunches Orlando</h1>
+    <div class="subtitle">West Orlando Executive Networking • Second Wednesday Monthly</div>
+  </header>
+
+  <div class="location-banner glass">
+    <div class="location-item">
+      <div class="location-icon">📍</div>
+      <div>
+        <div class="location-label">Location</div>
+        <div class="location-value" id="location-name">Loading...</div>
+      </div>
+    </div>
+    <div class="location-item">
+      <div class="location-icon">🏢</div>
+      <div>
+        <div class="location-label">Address</div>
+        <div class="location-value" id="location-address">Loading...</div>
+      </div>
+    </div>
+    <div class="location-item">
+      <div class="location-icon">🕐</div>
+      <div>
+        <div class="location-label">Time</div>
+        <div class="location-value" id="meeting-time">Loading...</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="main-container">
+    <aside class="calendar-section glass">
+      <div class="calendar-nav">
+        <button class="nav-btn" id="prev-month">‹</button>
+        <div class="calendar-title" id="calendar-title">January 2026</div>
+        <button class="nav-btn" id="next-month">›</button>
+      </div>
+      <div class="calendar-grid" id="calendar-grid"></div>
+    </aside>
+
+    <main class="content-panel glass">
+      <div class="panel-header">
+        <div class="panel-title">
+          <span>Attendees</span>
+          <span class="selected-date-display" id="selected-date-display">Select a date</span>
+        </div>
+        <div class="panel-actions">
+          <button class="btn btn--soft" id="invite-btn">➕ Invite Participant</button>
+          <button class="btn btn--soft" id="agenda-btn">📋 Agenda</button>
+          <button class="btn btn--soft" id="contact-btn">✉️ Contact Organizer</button>
+        </div>
+      </div>
+
+      <div class="participant-list" id="participant-list">
+        <div class="no-participants">
+          <p>Select a second Wednesday to view RSVPs</p>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- Invite Modal -->
+  <div class="backdrop" id="invite-modal">
+    <div class="modal glass">
+      <div class="modal-head">
+        <div class="modal-title">Invite Participant</div>
+        <button class="close-btn" data-close="invite-modal">×</button>
+      </div>
+      <div class="modal-body">
+        <div class="field">
+          <label>Full Name</label>
+          <input type="text" id="invite-name" placeholder="First Last">
+        </div>
+        <div class="field">
+          <label>Email Address</label>
+          <input type="email" id="invite-email" placeholder="email@example.com">
+        </div>
+        <div class="field">
+          <label>Phone Number</label>
+          <input type="tel" id="invite-phone" placeholder="(555) 123-4567">
+        </div>
+        <div class="field">
+          <label>Invited By</label>
+          <input type="text" id="invite-by" placeholder="Your name">
+        </div>
+      </div>
+      <div class="modal-foot">
+        <button class="btn btn--soft" data-close="invite-modal">Cancel</button>
+        <button class="btn btn--primary" id="submit-invite">Send Invite</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Agenda Modal -->
+  <div class="backdrop" id="agenda-modal">
+    <div class="modal glass">
+      <div class="modal-head">
+        <div class="modal-title">Meeting Agenda</div>
+        <button class="close-btn" data-close="agenda-modal">×</button>
+      </div>
+      <div class="modal-body">
+        <div class="field">
+          <label>Propose New Agenda Item</label>
+          <textarea id="agenda-item" placeholder="Enter your agenda topic..."></textarea>
+        </div>
+        <div class="field">
+          <label>Your Name</label>
+          <input type="text" id="agenda-proposer" placeholder="Your name">
+        </div>
+        <button class="btn btn--primary" id="submit-agenda" style="width: 100%; justify-content: center;">Add to Agenda</button>
+        
+        <div class="agenda-list" id="agenda-list">
+          <!-- Agenda items will be populated here -->
+        </div>
+      </div>
+      <div class="modal-foot">
+        <button class="btn btn--soft" data-close="agenda-modal">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Contact Modal -->
+  <div class="backdrop" id="contact-modal">
+    <div class="modal glass">
+      <div class="modal-head">
+        <div class="modal-title">Contact Organizer</div>
+        <button class="close-btn" data-close="contact-modal">×</button>
+      </div>
+      <div class="modal-body">
+        <div class="field">
+          <label>Your Name</label>
+          <input type="text" id="contact-name" placeholder="Your name">
+        </div>
+        <div class="field">
+          <label>Your Email</label>
+          <input type="email" id="contact-email" placeholder="your@email.com">
+        </div>
+        <div class="field">
+          <label>Message</label>
+          <textarea id="contact-message" placeholder="Your message to the organizer..."></textarea>
+        </div>
+      </div>
+      <div class="modal-foot">
+        <button class="btn btn--soft" data-close="contact-modal">Cancel</button>
+        <button class="btn btn--primary" id="submit-contact">Send Message</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div class="toast" id="toast">Saved</div>
+
+  <script>
+    // State
+    let currentDate = new Date();
+    let selectedDate = null;
+    let participants = [];
+    let settings = {};
+
+    // API helpers
+    const api = {
+      async get(url) {
+        const res = await fetch(url);
+        return res.json();
+      },
+      async post(url, data) {
+        const res = await fetch(url, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data)
+        });
+        return res.json();
+      },
+      async put(url, data) {
+        const res = await fetch(url, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data)
+        });
+        return res.json();
+      },
+      async delete(url) {
+        const res = await fetch(url, { method: 'DELETE' });
+        return res.json();
+      }
+    };
+
+    // Get second Wednesday of a month
+    function getSecondWednesday(year, month) {
+      const date = new Date(year, month, 1);
+      let wednesdayCount = 0;
+      while (wednesdayCount < 2) {
+        if (date.getDay() === 3) wednesdayCount++;
+        if (wednesdayCount < 2) date.setDate(date.getDate() + 1);
+      }
+      return date;
+    }
+
+    // Format date for API
+    function formatDate(date) {
+      return date.toISOString().split('T')[0];
+    }
+
+    // Format date for display
+    function formatDisplayDate(date) {
+      return date.toLocaleDateString('en-US', { 
+        weekday: 'long', 
+        year: 'numeric', 
+        month: 'long', 
+        day: 'numeric' 
+      });
+    }
+
+    // Render calendar
+    function renderCalendar() {
+      const year = currentDate.getFullYear();
+      const month = currentDate.getMonth();
+      const today = new Date();
+      
+      document.getElementById('calendar-title').textContent = 
+        currentDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+      
+      const grid = document.getElementById('calendar-grid');
+      grid.innerHTML = '';
+      
+      // Day headers
+      ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].forEach(day => {
+        grid.innerHTML += `<div class="calendar-day-header">${day}</div>`;
+      });
+      
+      // First day of month
+      const firstDay = new Date(year, month, 1);
+      const lastDay = new Date(year, month + 1, 0);
+      const secondWed = getSecondWednesday(year, month);
+      
+      // Previous month days
+      for (let i = 0; i < firstDay.getDay(); i++) {
+        const prevDate = new Date(year, month, -firstDay.getDay() + i + 1);
+        grid.innerHTML += `<div class="calendar-day other-month">${prevDate.getDate()}</div>`;
+      }
+      
+      // Current month days
+      for (let day = 1; day <= lastDay.getDate(); day++) {
+        const date = new Date(year, month, day);
+        const isToday = date.toDateString() === today.toDateString();
+        const isSecondWed = date.toDateString() === secondWed.toDateString();
+        const isSelected = selectedDate && date.toDateString() === selectedDate.toDateString();
+        
+        let classes = 'calendar-day';
+        if (isToday) classes += ' today';
+        if (isSecondWed) classes += ' second-wednesday';
+        if (isSelected) classes += ' selected';
+        
+        const div = document.createElement('div');
+        div.className = classes;
+        div.textContent = day;
+        
+        if (isSecondWed) {
+          div.addEventListener('click', () => selectDate(date));
+        }
+        
+        grid.appendChild(div);
+      }
+      
+      // Next month days
+      const remainingDays = 42 - grid.children.length;
+      for (let i = 1; i <= remainingDays; i++) {
+        grid.innerHTML += `<div class="calendar-day other-month">${i}</div>`;
+      }
+    }
+
+    // Select a date
+    async function selectDate(date) {
+      selectedDate = date;
+      document.getElementById('selected-date-display').textContent = formatDisplayDate(date);
+      renderCalendar();
+      await loadRSVPs();
+    }
+
+    // Load RSVPs for selected date
+    async function loadRSVPs() {
+      if (!selectedDate) return;
+      
+      const dateStr = formatDate(selectedDate);
+      const rsvps = await api.get(`/api/rsvps/${dateStr}`);
+      renderParticipants(rsvps);
+    }
+
+    // Render participants
+    function renderParticipants(rsvps) {
+      const list = document.getElementById('participant-list');
+      
+      if (!rsvps || rsvps.length === 0) {
+        list.innerHTML = `
+          <div class="no-participants">
+            <p>No participants yet. Invite someone to get started!</p>
+          </div>
+        `;
+        return;
+      }
+      
+      list.innerHTML = rsvps.map(p => `
+        <div class="participant-item status-${p.status}" data-id="${p.participant_id}">
+          <div>
+            <div class="participant-name">${escapeHtml(p.name)}</div>
+          </div>
+          <div class="rsvp-buttons">
+            <button class="rsvp-btn ${p.status === 'yes' ? 'yes' : ''}" 
+                    data-status="yes" title="Yes">✓</button>
+            <button class="rsvp-btn ${p.status === 'maybe' ? 'maybe' : ''}" 
+                    data-status="maybe" title="Maybe">?</button>
+            <button class="rsvp-btn ${p.status === 'no' ? 'no' : ''}" 
+                    data-status="no" title="No">✗</button>
+          </div>
+        </div>
+      `).join('');
+      
+      // Add click handlers
+      list.querySelectorAll('.rsvp-btn').forEach(btn => {
+        btn.addEventListener('click', async (e) => {
+          const item = e.target.closest('.participant-item');
+          const participantId = item.dataset.id;
+          const status = e.target.dataset.status;
+          
+          await api.post('/api/rsvps', {
+            participant_id: parseInt(participantId),
+            event_date: formatDate(selectedDate),
+            status
+          });
+          
+          await loadRSVPs();
+          showToast('RSVP updated');
+        });
+      });
+    }
+
+    // Load settings
+    async function loadSettings() {
+      settings = await api.get('/api/settings');
+      document.getElementById('location-name').textContent = settings.location_name || 'TBD';
+      document.getElementById('location-address').textContent = settings.location_address || 'TBD';
+      document.getElementById('meeting-time').textContent = settings.meeting_time || '12:00 PM';
+    }
+
+    // Load agendas
+    async function loadAgendas() {
+      if (!selectedDate) return;
+      
+      const dateStr = formatDate(selectedDate);
+      const agendas = await api.get(`/api/agendas/${dateStr}`);
+      
+      const list = document.getElementById('agenda-list');
+      if (agendas.length === 0) {
+        list.innerHTML = '<p style="color: var(--muted2); text-align: center; padding: 20px;">No agenda items yet</p>';
+        return;
+      }
+      
+      list.innerHTML = agendas.map(a => `
+        <div class="agenda-item">
+          <div class="agenda-text">${escapeHtml(a.item)}</div>
+          <div class="agenda-meta">Proposed by ${escapeHtml(a.proposed_by || 'Anonymous')}</div>
+        </div>
+      `).join('');
+    }
+
+    // Modal helpers
+    function openModal(id) {
+      document.getElementById(id).classList.add('is-open');
+    }
+
+    function closeModal(id) {
+      document.getElementById(id).classList.remove('is-open');
+    }
+
+    // Toast
+    function showToast(message) {
+      const toast = document.getElementById('toast');
+      toast.textContent = message;
+      toast.classList.add('is-show');
+      setTimeout(() => toast.classList.remove('is-show'), 2500);
+    }
+
+    // Escape HTML
+    function escapeHtml(text) {
+      if (!text) return '';
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
+    // Event listeners
+    document.getElementById('prev-month').addEventListener('click', () => {
+      currentDate.setMonth(currentDate.getMonth() - 1);
+      renderCalendar();
+    });
+
+    document.getElementById('next-month').addEventListener('click', () => {
+      currentDate.setMonth(currentDate.getMonth() + 1);
+      renderCalendar();
+    });
+
+    document.getElementById('invite-btn').addEventListener('click', () => openModal('invite-modal'));
+    document.getElementById('agenda-btn').addEventListener('click', () => {
+      loadAgendas();
+      openModal('agenda-modal');
+    });
+    document.getElementById('contact-btn').addEventListener('click', () => openModal('contact-modal'));
+
+    // Close modal buttons
+    document.querySelectorAll('[data-close]').forEach(btn => {
+      btn.addEventListener('click', () => closeModal(btn.dataset.close));
+    });
+
+    // Close on backdrop click
+    document.querySelectorAll('.backdrop').forEach(backdrop => {
+      backdrop.addEventListener('click', (e) => {
+        if (e.target === backdrop) backdrop.classList.remove('is-open');
+      });
+    });
+
+    // Submit invite
+    document.getElementById('submit-invite').addEventListener('click', async () => {
+      const name = document.getElementById('invite-name').value.trim();
+      const email = document.getElementById('invite-email').value.trim();
+      const phone = document.getElementById('invite-phone').value.trim();
+      const invitedBy = document.getElementById('invite-by').value.trim();
+
+      if (!name) {
+        showToast('Please enter a name');
+        return;
+      }
+
+      await api.post('/api/participants', {
+        name, email, phone, invited_by: invitedBy
+      });
+
+      document.getElementById('invite-name').value = '';
+      document.getElementById('invite-email').value = '';
+      document.getElementById('invite-phone').value = '';
+      document.getElementById('invite-by').value = '';
+
+      closeModal('invite-modal');
+      showToast('Participant invited');
+      
+      if (selectedDate) await loadRSVPs();
+    });
+
+    // Submit agenda
+    document.getElementById('submit-agenda').addEventListener('click', async () => {
+      if (!selectedDate) {
+        showToast('Please select a date first');
+        return;
+      }
+
+      const item = document.getElementById('agenda-item').value.trim();
+      const proposer = document.getElementById('agenda-proposer').value.trim();
+
+      if (!item) {
+        showToast('Please enter an agenda item');
+        return;
+      }
+
+      await api.post('/api/agendas', {
+        event_date: formatDate(selectedDate),
+        item,
+        proposed_by: proposer
+      });
+
+      document.getElementById('agenda-item').value = '';
+      document.getElementById('agenda-proposer').value = '';
+
+      showToast('Agenda item added');
+      await loadAgendas();
+    });
+
+    // Submit contact
+    document.getElementById('submit-contact').addEventListener('click', async () => {
+      const name = document.getElementById('contact-name').value.trim();
+      const email = document.getElementById('contact-email').value.trim();
+      const message = document.getElementById('contact-message').value.trim();
+
+      if (!message) {
+        showToast('Please enter a message');
+        return;
+      }
+
+      await api.post('/api/messages', {
+        sender_name: name,
+        sender_email: email,
+        message
+      });
+
+      document.getElementById('contact-name').value = '';
+      document.getElementById('contact-email').value = '';
+      document.getElementById('contact-message').value = '';
+
+      closeModal('contact-modal');
+      showToast('Message sent to organizer');
+    });
+
+    // Initialize
+    async function init() {
+      await loadSettings();
+      renderCalendar();
+      
+      // Auto-select current month's second Wednesday if it's in the future
+      const secondWed = getSecondWednesday(currentDate.getFullYear(), currentDate.getMonth());
+      if (secondWed >= new Date()) {
+        await selectDate(secondWed);
+      }
+    }
+
+    init();
+  </script>
+</body>
+</html>
