@@ -4,7 +4,7 @@ services:
   app:
     build: .
     ports:
-      - "3000:3000"
+      - "3100:3000"
     environment:
       - DATABASE_URL=postgresql://postgres:postgres@db:5432/rnrsvp
       - NODE_ENV=production
