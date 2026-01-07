@@ -286,7 +286,8 @@ app.get('/api/ical/:date', async (req, res) => {
     const settings = await pool.query('SELECT * FROM settings LIMIT 1');
     const s = settings.rows[0] || {};
     
-    const eventDate = new Date(req.params.date);
+    // Parse the date parts
+    const [year, month, day] = req.params.date.split('-').map(Number);
     
     // Parse time (e.g., "12:00 PM")
     let hours = 12;
@@ -305,21 +306,21 @@ app.get('/api/ical/:date', async (req, res) => {
       }
     }
     
-    // Set event start time
-    eventDate.setHours(hours, minutes, 0, 0);
+    // Format as local time for iCal (DTSTART;TZID=America/New_York)
+    const pad = (n) => n.toString().padStart(2, '0');
+    const dtstart = `${year}${pad(month)}${pad(day)}T${pad(hours)}${pad(minutes)}00`;
     
-    // Event end time (1.5 hours later)
-    const endDate = new Date(eventDate.getTime() + 90 * 60 * 1000);
-    
-    // Format dates for iCal (UTC)
-    const formatICalDate = (date) => {
-      return date.toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '');
-    };
+    // End time (1.5 hours later)
+    let endHours = hours + 1;
+    let endMinutes = minutes + 30;
+    if (endMinutes >= 60) {
+      endHours += 1;
+      endMinutes -= 60;
+    }
+    const dtend = `${year}${pad(month)}${pad(day)}T${pad(endHours)}${pad(endMinutes)}00`;
     
     const uid = `ctolunch-${req.params.date}@ctolunches.iternative.com`;
-    const now = formatICalDate(new Date());
-    const dtstart = formatICalDate(eventDate);
-    const dtend = formatICalDate(endDate);
+    const now = new Date().toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '');
     
     const location = `${s.location_name || 'TBD'}, ${s.location_address || 'TBD'}`;
     
@@ -328,11 +329,28 @@ VERSION:2.0
 PRODID:-//CTO Lunches Orlando//NONSGML v1.0//EN
 CALSCALE:GREGORIAN
 METHOD:PUBLISH
+BEGIN:VTIMEZONE
+TZID:America/New_York
+BEGIN:DAYLIGHT
+TZOFFSETFROM:-0500
+TZOFFSETTO:-0400
+TZNAME:EDT
+DTSTART:19700308T020000
+RRULE:FREQ=YEARLY;BYMONTH=3;BYDAY=2SU
+END:DAYLIGHT
+BEGIN:STANDARD
+TZOFFSETFROM:-0400
+TZOFFSETTO:-0500
+TZNAME:EST
+DTSTART:19701101T020000
+RRULE:FREQ=YEARLY;BYMONTH=11;BYDAY=1SU
+END:STANDARD
+END:VTIMEZONE
 BEGIN:VEVENT
 UID:${uid}
 DTSTAMP:${now}
-DTSTART:${dtstart}
-DTEND:${dtend}
+DTSTART;TZID=America/New_York:${dtstart}
+DTEND;TZID=America/New_York:${dtend}
 SUMMARY:CTO Lunches Orlando
 DESCRIPTION:Monthly CTO networking lunch. RSVP at https://ctolunches.iternative.com
 LOCATION:${location}
@@ -347,6 +365,20 @@ END:VCALENDAR`;
     res.status(500).json({ error: err.message });
   }
 });
+
+// Helper to format date in Eastern Time
+function formatEasternTime(date) {
+  return date.toLocaleString('en-US', { 
+    timeZone: 'America/New_York',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    hour12: false
+  });
+}
 
 // New endpoint: Get quarterly RSVP data and send to webhook
 app.post('/api/send-quarterly-rsvp', async (req, res) => {
@@ -417,7 +449,9 @@ app.post('/api/send-quarterly-rsvp', async (req, res) => {
       all_participants: participantsResult.rows,
       rsvps_by_date: rsvpsByDate,
       agendas_by_date: agendasByDate,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
+      timestamp_eastern: formatEasternTime(new Date()),
+      timezone: 'America/New_York'
     };
     
     const success = await sendWebhook(WEBHOOK_RSVP_LIST, payload);
