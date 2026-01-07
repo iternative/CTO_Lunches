@@ -12,9 +12,30 @@ app.use(cors());
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
+// Webhook URLs
+const WEBHOOK_INVITE = 'https://n8n.jane.iternative.com/webhook/14f1dc78-d1ca-4540-a7d9-05a500be7bceCTO_Lunch_INVITE';
+const WEBHOOK_MESSAGE = 'https://n8n.jane.iternative.com/webhook/14f1dc78-d1ca-4540-a7d9-05a500be7bceCTO_Lunch_INVITE';
+const WEBHOOK_RSVP_LIST = 'https://n8n.jane.iternative.com/webhook/3a335e73-c12b-4225-9f92-bcbec9b32445_CURRENT_RSVP_LIST';
+
 const pool = new pg.Pool({
   connectionString: process.env.DATABASE_URL || 'postgresql://postgres:postgres@db:5432/rnrsvp'
 });
+
+// Helper function to send webhooks
+async function sendWebhook(url, data) {
+  try {
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data)
+    });
+    console.log(`Webhook sent to ${url}: ${response.status}`);
+    return response.ok;
+  } catch (err) {
+    console.error(`Webhook error: ${err.message}`);
+    return false;
+  }
+}
 
 async function initDB() {
   const client = await pool.connect();
@@ -129,6 +150,14 @@ app.post('/api/participants', async (req, res) => {
       'INSERT INTO participants (name, email, phone, invited_by) VALUES ($1,$2,$3,$4) RETURNING *',
       [name, email, phone, invited_by]
     );
+    
+    // Send webhook for new invite
+    await sendWebhook(WEBHOOK_INVITE, {
+      type: 'new_invite',
+      participant: result.rows[0],
+      timestamp: new Date().toISOString()
+    });
+    
     res.json(result.rows[0]);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -217,6 +246,14 @@ app.post('/api/messages', async (req, res) => {
       'INSERT INTO messages (sender_name, sender_email, message) VALUES ($1, $2, $3) RETURNING *',
       [sender_name, sender_email, message]
     );
+    
+    // Send webhook for new message
+    await sendWebhook(WEBHOOK_MESSAGE, {
+      type: 'contact_message',
+      message: result.rows[0],
+      timestamp: new Date().toISOString()
+    });
+    
     res.json(result.rows[0]);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -227,6 +264,71 @@ app.get('/api/messages', async (req, res) => {
   try {
     const result = await pool.query('SELECT * FROM messages ORDER BY created_at DESC');
     res.json(result.rows);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// New endpoint: Get quarterly RSVP data and send to webhook
+app.post('/api/send-quarterly-rsvp', async (req, res) => {
+  try {
+    // Calculate date range: last month, this month, next month
+    const now = new Date();
+    const lastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+    const nextMonthEnd = new Date(now.getFullYear(), now.getMonth() + 2, 0);
+    
+    // Get all participants with their emails
+    const participantsResult = await pool.query(
+      'SELECT id, name, email, phone, invited_by FROM participants ORDER BY name'
+    );
+    
+    // Get RSVPs for the quarter
+    const rsvpsResult = await pool.query(
+      `SELECT p.id as participant_id, p.name, p.email, p.phone, p.invited_by,
+              r.event_date, COALESCE(r.status, 'maybe') as status
+       FROM participants p
+       LEFT JOIN rsvps r ON p.id = r.participant_id 
+         AND r.event_date >= $1 AND r.event_date <= $2
+       ORDER BY r.event_date, p.name`,
+      [lastMonth.toISOString().split('T')[0], nextMonthEnd.toISOString().split('T')[0]]
+    );
+    
+    // Group by event date
+    const rsvpsByDate = {};
+    rsvpsResult.rows.forEach(row => {
+      if (row.event_date) {
+        const dateKey = row.event_date.toISOString().split('T')[0];
+        if (!rsvpsByDate[dateKey]) {
+          rsvpsByDate[dateKey] = [];
+        }
+        rsvpsByDate[dateKey].push({
+          name: row.name,
+          email: row.email,
+          phone: row.phone,
+          invited_by: row.invited_by,
+          status: row.status
+        });
+      }
+    });
+    
+    const payload = {
+      type: 'quarterly_rsvp_list',
+      quarter: {
+        start: lastMonth.toISOString().split('T')[0],
+        end: nextMonthEnd.toISOString().split('T')[0]
+      },
+      all_participants: participantsResult.rows,
+      rsvps_by_date: rsvpsByDate,
+      timestamp: new Date().toISOString()
+    };
+    
+    const success = await sendWebhook(WEBHOOK_RSVP_LIST, payload);
+    
+    if (success) {
+      res.json({ success: true, message: 'RSVP list sent to webhook' });
+    } else {
+      res.status(500).json({ success: false, message: 'Failed to send webhook' });
+    }
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

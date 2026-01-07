@@ -68,11 +68,6 @@
       background-clip: text;
       margin-bottom: 8px;
     }
-    .header .subtitle {
-      font-family: var(--mono);
-      font-size: 13px;
-      color: var(--muted2);
-    }
     .admin-badge {
       display: inline-block;
       font-family: var(--mono);
@@ -255,6 +250,10 @@
     .btn--primary {
       background: linear-gradient(135deg, rgba(255,160,80,.25), rgba(255,100,100,.2));
       border-color: rgba(255,160,80,.4);
+    }
+    .btn--webhook {
+      background: linear-gradient(135deg, rgba(80,200,255,.25), rgba(100,150,255,.2));
+      border-color: rgba(80,200,255,.4);
     }
     .participant-list { display: flex; flex-direction: column; gap: 8px; }
     .participant-item {
@@ -451,7 +450,6 @@
 <body>
   <header class="header">
     <h1>CTO Lunches Orlando</h1>
-    <div class="subtitle"></div>
     <div class="admin-badge">🔧 ADMIN PANEL</div>
   </header>
 
@@ -488,6 +486,13 @@
         <button class="nav-btn" id="next-month">›</button>
       </div>
       <div class="calendar-grid" id="calendar-grid"></div>
+      
+      <!-- Send RSVP List Button -->
+      <div style="margin-top: 20px;">
+        <button class="btn btn--webhook" id="send-rsvp-list" style="width: 100%; justify-content: center;">
+          📤 Send Current RSVP List
+        </button>
+      </div>
     </aside>
 
     <main class="content-panel glass">
@@ -823,6 +828,20 @@
       await loadAgendas();
     });
 
+    // Send RSVP List button
+    document.getElementById('send-rsvp-list').addEventListener('click', async () => {
+      try {
+        const result = await api.post('/api/send-quarterly-rsvp', {});
+        if (result.success) {
+          showToast('RSVP list sent successfully!');
+        } else {
+          showToast('Failed to send RSVP list');
+        }
+      } catch (err) {
+        showToast('Error sending RSVP list');
+      }
+    });
+
     async function init() {
       await loadSettings();
       renderCalendar();
@@ -833,6 +852,3 @@
   </script>
 </body>
 </html>
-
-
-
