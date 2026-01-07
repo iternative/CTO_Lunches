@@ -293,7 +293,16 @@ app.post('/api/send-quarterly-rsvp', async (req, res) => {
       [lastMonth.toISOString().split('T')[0], nextMonthEnd.toISOString().split('T')[0]]
     );
     
-    // Group by event date
+    // Get agenda items for the quarter
+    const agendasResult = await pool.query(
+      `SELECT event_date, item, proposed_by, created_at
+       FROM agendas 
+       WHERE event_date >= $1 AND event_date <= $2
+       ORDER BY event_date, created_at`,
+      [lastMonth.toISOString().split('T')[0], nextMonthEnd.toISOString().split('T')[0]]
+    );
+    
+    // Group RSVPs by event date
     const rsvpsByDate = {};
     rsvpsResult.rows.forEach(row => {
       if (row.event_date) {
@@ -311,6 +320,21 @@ app.post('/api/send-quarterly-rsvp', async (req, res) => {
       }
     });
     
+    // Group agendas by event date
+    const agendasByDate = {};
+    agendasResult.rows.forEach(row => {
+      if (row.event_date) {
+        const dateKey = row.event_date.toISOString().split('T')[0];
+        if (!agendasByDate[dateKey]) {
+          agendasByDate[dateKey] = [];
+        }
+        agendasByDate[dateKey].push({
+          item: row.item,
+          proposed_by: row.proposed_by || 'Anonymous'
+        });
+      }
+    });
+    
     const payload = {
       type: 'quarterly_rsvp_list',
       quarter: {
@@ -319,6 +343,7 @@ app.post('/api/send-quarterly-rsvp', async (req, res) => {
       },
       all_participants: participantsResult.rows,
       rsvps_by_date: rsvpsByDate,
+      agendas_by_date: agendasByDate,
       timestamp: new Date().toISOString()
     };
     
