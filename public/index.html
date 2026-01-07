@@ -348,6 +348,21 @@
       gap: 6px;
     }
 
+    .rsvp-btn-wrapper {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .rsvp-label {
+      font-family: var(--mono);
+      font-size: 9px;
+      color: var(--muted2);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
     .rsvp-btn {
       width: 36px;
       height: 36px;
@@ -934,12 +949,21 @@
             <div class="participant-name">${escapeHtml(p.name)}</div>
           </div>
           <div class="rsvp-buttons">
-            <button class="rsvp-btn ${p.status === 'yes' ? 'yes' : ''}" 
-                    data-status="yes" title="Yes">✓</button>
-            <button class="rsvp-btn ${p.status === 'maybe' ? 'maybe' : ''}" 
-                    data-status="maybe" title="Maybe">?</button>
-            <button class="rsvp-btn ${p.status === 'no' ? 'no' : ''}" 
-                    data-status="no" title="No">✗</button>
+            <div class="rsvp-btn-wrapper">
+              <span class="rsvp-label">Yes</span>
+              <button class="rsvp-btn ${p.status === 'yes' ? 'yes' : ''}" 
+                      data-status="yes" title="Yes">✓</button>
+            </div>
+            <div class="rsvp-btn-wrapper">
+              <span class="rsvp-label">Maybe</span>
+              <button class="rsvp-btn ${p.status === 'maybe' ? 'maybe' : ''}" 
+                      data-status="maybe" title="Maybe">?</button>
+            </div>
+            <div class="rsvp-btn-wrapper">
+              <span class="rsvp-label">No</span>
+              <button class="rsvp-btn ${p.status === 'no' ? 'no' : ''}" 
+                      data-status="no" title="No">✗</button>
+            </div>
           </div>
         </div>
       `).join('');
