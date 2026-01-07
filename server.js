@@ -12,7 +12,7 @@ app.use(cors());
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Webhook URLs
+// Webhook URLs - CORRECTED
 const WEBHOOK_INVITE = 'https://n8n.jane.iternative.com/webhook/14f1dc78-d1ca-4540-a7d9-05a500be7bceCTO_Lunch_INVITE';
 const WEBHOOK_MESSAGE = 'https://n8n.jane.iternative.com/webhook/14f1dc78-d1ca-4540-a7d9-05a500be7bceCTO_CONTACT_ORGANIZER';
 const WEBHOOK_RSVP_LIST = 'https://n8n.jane.iternative.com/webhook/3a335e73-c12b-4225-9f92-bcbec9b32445_CURRENT_RSVP_LIST';
@@ -35,6 +35,17 @@ async function sendWebhook(url, data) {
     console.error(`Webhook error: ${err.message}`);
     return false;
   }
+}
+
+// Helper function to get second Wednesday of a month
+function getSecondWednesday(year, month) {
+  const date = new Date(year, month, 1);
+  let count = 0;
+  while (count < 2) {
+    if (date.getDay() === 3) count++;
+    if (count < 2) date.setDate(date.getDate() + 1);
+  }
+  return date;
 }
 
 async function initDB() {
@@ -151,7 +162,7 @@ app.post('/api/participants', async (req, res) => {
       [name, email, phone, invited_by]
     );
     
-    // Send webhook for new invite
+    // Send webhook for new invite - USES WEBHOOK_INVITE
     await sendWebhook(WEBHOOK_INVITE, {
       type: 'new_invite',
       participant: result.rows[0],
@@ -247,7 +258,7 @@ app.post('/api/messages', async (req, res) => {
       [sender_name, sender_email, message]
     );
     
-    // Send webhook for new message
+    // Send webhook for new message - USES WEBHOOK_MESSAGE (Contact Organizer)
     await sendWebhook(WEBHOOK_MESSAGE, {
       type: 'contact_message',
       message: result.rows[0],
@@ -269,20 +280,85 @@ app.get('/api/messages', async (req, res) => {
   }
 });
 
+// iCal download endpoint
+app.get('/api/ical/:date', async (req, res) => {
+  try {
+    const settings = await pool.query('SELECT * FROM settings LIMIT 1');
+    const s = settings.rows[0] || {};
+    
+    const eventDate = new Date(req.params.date);
+    
+    // Parse time (e.g., "12:00 PM")
+    let hours = 12;
+    let minutes = 0;
+    if (s.meeting_time) {
+      const timeMatch = s.meeting_time.match(/(\d+):(\d+)\s*(AM|PM)?/i);
+      if (timeMatch) {
+        hours = parseInt(timeMatch[1]);
+        minutes = parseInt(timeMatch[2]);
+        if (timeMatch[3] && timeMatch[3].toUpperCase() === 'PM' && hours !== 12) {
+          hours += 12;
+        }
+        if (timeMatch[3] && timeMatch[3].toUpperCase() === 'AM' && hours === 12) {
+          hours = 0;
+        }
+      }
+    }
+    
+    // Set event start time
+    eventDate.setHours(hours, minutes, 0, 0);
+    
+    // Event end time (1.5 hours later)
+    const endDate = new Date(eventDate.getTime() + 90 * 60 * 1000);
+    
+    // Format dates for iCal (UTC)
+    const formatICalDate = (date) => {
+      return date.toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '');
+    };
+    
+    const uid = `ctolunch-${req.params.date}@ctolunches.iternative.com`;
+    const now = formatICalDate(new Date());
+    const dtstart = formatICalDate(eventDate);
+    const dtend = formatICalDate(endDate);
+    
+    const location = `${s.location_name || 'TBD'}, ${s.location_address || 'TBD'}`;
+    
+    const ical = `BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//CTO Lunches Orlando//NONSGML v1.0//EN
+CALSCALE:GREGORIAN
+METHOD:PUBLISH
+BEGIN:VEVENT
+UID:${uid}
+DTSTAMP:${now}
+DTSTART:${dtstart}
+DTEND:${dtend}
+SUMMARY:CTO Lunches Orlando
+DESCRIPTION:Monthly CTO networking lunch. RSVP at https://ctolunches.iternative.com
+LOCATION:${location}
+STATUS:CONFIRMED
+END:VEVENT
+END:VCALENDAR`;
+
+    res.setHeader('Content-Type', 'text/calendar; charset=utf-8');
+    res.setHeader('Content-Disposition', `attachment; filename="cto-lunch-${req.params.date}.ics"`);
+    res.send(ical);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // New endpoint: Get quarterly RSVP data and send to webhook
 app.post('/api/send-quarterly-rsvp', async (req, res) => {
   try {
-    // Calculate date range: last month, this month, next month
     const now = new Date();
     const lastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
     const nextMonthEnd = new Date(now.getFullYear(), now.getMonth() + 2, 0);
     
-    // Get all participants with their emails
     const participantsResult = await pool.query(
       'SELECT id, name, email, phone, invited_by FROM participants ORDER BY name'
     );
     
-    // Get RSVPs for the quarter
     const rsvpsResult = await pool.query(
       `SELECT p.id as participant_id, p.name, p.email, p.phone, p.invited_by,
               r.event_date, COALESCE(r.status, 'maybe') as status
@@ -293,7 +369,6 @@ app.post('/api/send-quarterly-rsvp', async (req, res) => {
       [lastMonth.toISOString().split('T')[0], nextMonthEnd.toISOString().split('T')[0]]
     );
     
-    // Get agenda items for the quarter
     const agendasResult = await pool.query(
       `SELECT event_date, item, proposed_by, created_at
        FROM agendas 
@@ -302,7 +377,6 @@ app.post('/api/send-quarterly-rsvp', async (req, res) => {
       [lastMonth.toISOString().split('T')[0], nextMonthEnd.toISOString().split('T')[0]]
     );
     
-    // Group RSVPs by event date
     const rsvpsByDate = {};
     rsvpsResult.rows.forEach(row => {
       if (row.event_date) {
@@ -320,7 +394,6 @@ app.post('/api/send-quarterly-rsvp', async (req, res) => {
       }
     });
     
-    // Group agendas by event date
     const agendasByDate = {};
     agendasResult.rows.forEach(row => {
       if (row.event_date) {
@@ -368,5 +441,3 @@ app.get('/', (req, res) => {
 });
 
 startWithRetry();
-
-

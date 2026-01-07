@@ -59,7 +59,6 @@
       background: linear-gradient(180deg, rgba(255,255,255,.08), rgba(255,255,255,.04));
     }
 
-    /* Header */
     .header {
       padding: 24px;
       text-align: center;
@@ -77,14 +76,6 @@
       margin-bottom: 8px;
     }
 
-    .header .subtitle {
-      font-family: var(--mono);
-      font-size: 13px;
-      color: var(--muted2);
-      letter-spacing: 0.5px;
-    }
-
-    /* Location Banner */
     .location-banner {
       margin: 24px;
       padding: 20px 24px;
@@ -126,7 +117,29 @@
       margin-top: 2px;
     }
 
-    /* Main Layout */
+    .ical-btn {
+      border: 1px solid rgba(120,150,255,.4);
+      background: linear-gradient(135deg, rgba(120,150,255,.2), rgba(160,90,255,.15));
+      color: var(--txt);
+      border-radius: 14px;
+      padding: 12px 20px;
+      font-size: 13px;
+      font-family: var(--sans);
+      cursor: pointer;
+      transition: transform .15s ease, border-color .15s ease, box-shadow .15s ease;
+      white-space: nowrap;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      text-decoration: none;
+    }
+
+    .ical-btn:hover {
+      transform: translateY(-2px);
+      border-color: rgba(120,150,255,.6);
+      box-shadow: 0 8px 24px rgba(120,150,255,.2);
+    }
+
     .main-container {
       display: grid;
       grid-template-columns: 380px 1fr;
@@ -142,7 +155,6 @@
       }
     }
 
-    /* Calendar */
     .calendar-section {
       padding: 20px;
     }
@@ -241,7 +253,6 @@
       border-radius: 50%;
     }
 
-    /* Content Panel */
     .content-panel {
       padding: 20px;
     }
@@ -299,7 +310,6 @@
       border-color: rgba(120,150,255,.4);
     }
 
-    /* Participant List */
     .participant-list {
       display: flex;
       flex-direction: column;
@@ -390,7 +400,6 @@
       border-color: rgba(255, 200, 120, .25);
     }
 
-    /* Empty State */
     .empty-state {
       text-align: center;
       padding: 40px 20px;
@@ -403,7 +412,6 @@
       opacity: 0.5;
     }
 
-    /* Modal */
     .backdrop {
       position: fixed;
       inset: 0;
@@ -474,7 +482,6 @@
       border-color: var(--stroke2);
     }
 
-    /* Form Fields */
     .field {
       display: flex;
       flex-direction: column;
@@ -516,7 +523,6 @@
       resize: vertical;
     }
 
-    /* Agenda List */
     .agenda-list {
       display: flex;
       flex-direction: column;
@@ -543,7 +549,6 @@
       margin-top: 8px;
     }
 
-    /* Toast */
     .toast {
       position: fixed;
       bottom: 24px;
@@ -567,7 +572,6 @@
       opacity: 1;
     }
 
-    /* Badge */
     .badge {
       font-family: var(--mono);
       font-size: 11px;
@@ -578,7 +582,6 @@
       background: rgba(0,0,0,.12);
     }
 
-    /* Selected Date Display */
     .selected-date-display {
       font-family: var(--mono);
       font-size: 12px;
@@ -589,7 +592,6 @@
       background: rgba(0,0,0,.12);
     }
 
-    /* No participants message */
     .no-participants {
       text-align: center;
       padding: 60px 20px;
@@ -600,7 +602,6 @@
       margin-bottom: 20px;
     }
 
-    /* Responsive */
     @media (max-width: 768px) {
       .header h1 {
         font-size: 1.8rem;
@@ -630,7 +631,6 @@
 <body>
   <header class="header">
     <h1>CTO Lunches Orlando</h1>
-    <div class="subtitle"></div>
   </header>
 
   <div class="location-banner glass">
@@ -655,6 +655,9 @@
         <div class="location-value" id="meeting-time">Loading...</div>
       </div>
     </div>
+    <a class="ical-btn" id="ical-download" href="#" download>
+      📅 Add to Calendar
+    </a>
   </div>
 
   <div class="main-container">
@@ -738,9 +741,7 @@
         </div>
         <button class="btn btn--primary" id="submit-agenda" style="width: 100%; justify-content: center;">Add to Agenda</button>
         
-        <div class="agenda-list" id="agenda-list">
-          <!-- Agenda items will be populated here -->
-        </div>
+        <div class="agenda-list" id="agenda-list"></div>
       </div>
       <div class="modal-foot">
         <button class="btn btn--soft" data-close="agenda-modal">Close</button>
@@ -776,17 +777,14 @@
     </div>
   </div>
 
-  <!-- Toast -->
   <div class="toast" id="toast">Saved</div>
 
   <script>
-    // State
     let currentDate = new Date();
     let selectedDate = null;
     let participants = [];
     let settings = {};
 
-    // API helpers
     const api = {
       async get(url) {
         const res = await fetch(url);
@@ -814,7 +812,6 @@
       }
     };
 
-    // Get second Wednesday of a month
     function getSecondWednesday(year, month) {
       const date = new Date(year, month, 1);
       let wednesdayCount = 0;
@@ -825,12 +822,10 @@
       return date;
     }
 
-    // Format date for API
     function formatDate(date) {
       return date.toISOString().split('T')[0];
     }
 
-    // Format date for display
     function formatDisplayDate(date) {
       return date.toLocaleDateString('en-US', { 
         weekday: 'long', 
@@ -840,7 +835,19 @@
       });
     }
 
-    // Render calendar
+    function updateICalLink() {
+      const icalBtn = document.getElementById('ical-download');
+      if (selectedDate) {
+        icalBtn.href = `/api/ical/${formatDate(selectedDate)}`;
+        icalBtn.style.opacity = '1';
+        icalBtn.style.pointerEvents = 'auto';
+      } else {
+        icalBtn.href = '#';
+        icalBtn.style.opacity = '0.5';
+        icalBtn.style.pointerEvents = 'none';
+      }
+    }
+
     function renderCalendar() {
       const year = currentDate.getFullYear();
       const month = currentDate.getMonth();
@@ -852,23 +859,19 @@
       const grid = document.getElementById('calendar-grid');
       grid.innerHTML = '';
       
-      // Day headers
       ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].forEach(day => {
         grid.innerHTML += `<div class="calendar-day-header">${day}</div>`;
       });
       
-      // First day of month
       const firstDay = new Date(year, month, 1);
       const lastDay = new Date(year, month + 1, 0);
       const secondWed = getSecondWednesday(year, month);
       
-      // Previous month days
       for (let i = 0; i < firstDay.getDay(); i++) {
         const prevDate = new Date(year, month, -firstDay.getDay() + i + 1);
         grid.innerHTML += `<div class="calendar-day other-month">${prevDate.getDate()}</div>`;
       }
       
-      // Current month days
       for (let day = 1; day <= lastDay.getDate(); day++) {
         const date = new Date(year, month, day);
         const isToday = date.toDateString() === today.toDateString();
@@ -891,22 +894,20 @@
         grid.appendChild(div);
       }
       
-      // Next month days
       const remainingDays = 42 - grid.children.length;
       for (let i = 1; i <= remainingDays; i++) {
         grid.innerHTML += `<div class="calendar-day other-month">${i}</div>`;
       }
     }
 
-    // Select a date
     async function selectDate(date) {
       selectedDate = date;
       document.getElementById('selected-date-display').textContent = formatDisplayDate(date);
       renderCalendar();
+      updateICalLink();
       await loadRSVPs();
     }
 
-    // Load RSVPs for selected date
     async function loadRSVPs() {
       if (!selectedDate) return;
       
@@ -915,7 +916,6 @@
       renderParticipants(rsvps);
     }
 
-    // Render participants
     function renderParticipants(rsvps) {
       const list = document.getElementById('participant-list');
       
@@ -944,7 +944,6 @@
         </div>
       `).join('');
       
-      // Add click handlers
       list.querySelectorAll('.rsvp-btn').forEach(btn => {
         btn.addEventListener('click', async (e) => {
           const item = e.target.closest('.participant-item');
@@ -963,7 +962,6 @@
       });
     }
 
-    // Load settings
     async function loadSettings() {
       settings = await api.get('/api/settings');
       document.getElementById('location-name').textContent = settings.location_name || 'TBD';
@@ -971,7 +969,6 @@
       document.getElementById('meeting-time').textContent = settings.meeting_time || '12:00 PM';
     }
 
-    // Load agendas
     async function loadAgendas() {
       if (!selectedDate) return;
       
@@ -992,7 +989,6 @@
       `).join('');
     }
 
-    // Modal helpers
     function openModal(id) {
       document.getElementById(id).classList.add('is-open');
     }
@@ -1001,7 +997,6 @@
       document.getElementById(id).classList.remove('is-open');
     }
 
-    // Toast
     function showToast(message) {
       const toast = document.getElementById('toast');
       toast.textContent = message;
@@ -1009,7 +1004,6 @@
       setTimeout(() => toast.classList.remove('is-show'), 2500);
     }
 
-    // Escape HTML
     function escapeHtml(text) {
       if (!text) return '';
       const div = document.createElement('div');
@@ -1017,7 +1011,6 @@
       return div.innerHTML;
     }
 
-    // Event listeners
     document.getElementById('prev-month').addEventListener('click', () => {
       currentDate.setMonth(currentDate.getMonth() - 1);
       renderCalendar();
@@ -1035,19 +1028,16 @@
     });
     document.getElementById('contact-btn').addEventListener('click', () => openModal('contact-modal'));
 
-    // Close modal buttons
     document.querySelectorAll('[data-close]').forEach(btn => {
       btn.addEventListener('click', () => closeModal(btn.dataset.close));
     });
 
-    // Close on backdrop click
     document.querySelectorAll('.backdrop').forEach(backdrop => {
       backdrop.addEventListener('click', (e) => {
         if (e.target === backdrop) backdrop.classList.remove('is-open');
       });
     });
 
-    // Submit invite
     document.getElementById('submit-invite').addEventListener('click', async () => {
       const name = document.getElementById('invite-name').value.trim();
       const email = document.getElementById('invite-email').value.trim();
@@ -1074,7 +1064,6 @@
       if (selectedDate) await loadRSVPs();
     });
 
-    // Submit agenda
     document.getElementById('submit-agenda').addEventListener('click', async () => {
       if (!selectedDate) {
         showToast('Please select a date first');
@@ -1102,7 +1091,6 @@
       await loadAgendas();
     });
 
-    // Submit contact
     document.getElementById('submit-contact').addEventListener('click', async () => {
       const name = document.getElementById('contact-name').value.trim();
       const email = document.getElementById('contact-email').value.trim();
@@ -1127,12 +1115,11 @@
       showToast('Message sent to organizer');
     });
 
-    // Initialize
     async function init() {
       await loadSettings();
       renderCalendar();
+      updateICalLink();
       
-      // Auto-select current month's second Wednesday if it's in the future
       const secondWed = getSecondWednesday(currentDate.getFullYear(), currentDate.getMonth());
       if (secondWed >= new Date()) {
         await selectDate(secondWed);
@@ -1143,6 +1130,3 @@
   </script>
 </body>
 </html>
-
-
-
