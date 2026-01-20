@@ -16,6 +16,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 const WEBHOOK_INVITE = 'https://n8n.jane.iternative.com/webhook/14f1dc78-d1ca-4540-a7d9-05a500be7bceCTO_Lunch_INVITE';
 const WEBHOOK_MESSAGE = 'https://n8n.jane.iternative.com/webhook/14f1dc78-d1ca-4540-a7d9-05a500be7bceCTO_CONTACT_ORGANIZER';
 const WEBHOOK_RSVP_LIST = 'https://n8n.jane.iternative.com/webhook/3a335e73-c12b-4225-9f92-bcbec9b32445_CURRENT_RSVP_LIST';
+const WEBHOOK_REMINDER = 'https://n8n.jane.iternative.com/webhook/554fe8df-e951-451d-9cb8-7d5d53f56955';
 
 const pool = new pg.Pool({
   connectionString: process.env.DATABASE_URL || 'postgresql://postgres:postgres@db:5432/rnrsvp'
@@ -187,8 +188,8 @@ app.delete('/api/participants/:id', async (req, res) => {
 app.get('/api/rsvps/:date', async (req, res) => {
   try {
     const result = await pool.query(
-      `SELECT p.id as participant_id, p.name, COALESCE(r.status, 'maybe') as status 
-       FROM participants p 
+      `SELECT p.id as participant_id, p.name, p.email, COALESCE(r.status, 'unknown') as status
+       FROM participants p
        LEFT JOIN rsvps r ON p.id = r.participant_id AND r.event_date = $1
        ORDER BY p.name`,
       [req.params.date]
@@ -460,6 +461,81 @@ app.post('/api/send-quarterly-rsvp', async (req, res) => {
       res.json({ success: true, message: 'RSVP list sent to webhook' });
     } else {
       res.status(500).json({ success: false, message: 'Failed to send webhook' });
+    }
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// New endpoint: Send reminder for upcoming meeting
+app.post('/api/send-reminder', async (req, res) => {
+  try {
+    const now = new Date();
+    const currentYear = now.getFullYear();
+    const currentMonth = now.getMonth();
+
+    // Get upcoming meeting date (current month or next)
+    let upcomingDate = getSecondWednesday(currentYear, currentMonth);
+
+    // If current month's meeting has passed, get next month's
+    if (upcomingDate < now) {
+      const nextMonth = currentMonth === 11 ? 0 : currentMonth + 1;
+      const nextYear = currentMonth === 11 ? currentYear + 1 : currentYear;
+      upcomingDate = getSecondWednesday(nextYear, nextMonth);
+    }
+
+    const dateStr = upcomingDate.toISOString().split('T')[0];
+
+    // Get settings
+    const settingsResult = await pool.query('SELECT * FROM settings LIMIT 1');
+    const settings = settingsResult.rows[0] || {};
+
+    // Get all participants with their RSVP status for this date
+    const rsvpsResult = await pool.query(
+      `SELECT p.id, p.name, p.email, COALESCE(r.status, 'unknown') as status
+       FROM participants p
+       LEFT JOIN rsvps r ON p.id = r.participant_id AND r.event_date = $1
+       ORDER BY p.name`,
+      [dateStr]
+    );
+
+    // Get agenda items for this date
+    const agendasResult = await pool.query(
+      'SELECT item, proposed_by FROM agendas WHERE event_date = $1 ORDER BY created_at',
+      [dateStr]
+    );
+
+    // Build calendar download link
+    const calendarLink = `https://ctolunches.iternative.com/api/ical/${dateStr}`;
+
+    // Build payload
+    const payload = {
+      type: 'meeting_reminder',
+      meeting_date: dateStr,
+      meeting_time: settings.meeting_time || '12:00 PM',
+      location_name: settings.location_name || 'TBD',
+      location_address: settings.location_address || 'TBD',
+      participants: rsvpsResult.rows.map(p => ({
+        name: p.name,
+        email: p.email || '',
+        rsvp_status: p.status
+      })),
+      agenda_items: agendasResult.rows.map(a => ({
+        item: a.item,
+        proposed_by: a.proposed_by || 'Anonymous'
+      })),
+      calendar_download_link: calendarLink,
+      timestamp: new Date().toISOString(),
+      timestamp_eastern: formatEasternTime(new Date()),
+      timezone: 'America/New_York'
+    };
+
+    const success = await sendWebhook(WEBHOOK_REMINDER, payload);
+
+    if (success) {
+      res.json({ success: true, message: 'Reminder sent successfully', meeting_date: dateStr });
+    } else {
+      res.status(500).json({ success: false, message: 'Failed to send reminder webhook' });
     }
   } catch (err) {
     res.status(500).json({ error: err.message });

@@ -31,6 +31,8 @@
       --no-bg: rgba(255, 120, 120, .10);
       --maybe: rgba(255, 200, 120, .85);
       --maybe-bg: rgba(255, 200, 120, .10);
+      --unknown: rgba(150, 150, 170, .85);
+      --unknown-bg: rgba(150, 150, 170, .08);
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -400,6 +402,12 @@
       color: var(--maybe);
     }
 
+    .rsvp-btn.unknown {
+      background: var(--unknown-bg);
+      border-color: rgba(150, 150, 170, .2);
+      color: var(--unknown);
+    }
+
     .participant-item.status-yes {
       background: linear-gradient(90deg, var(--yes-bg), transparent 60%);
       border-color: rgba(120, 255, 180, .25);
@@ -413,6 +421,11 @@
     .participant-item.status-maybe {
       background: linear-gradient(90deg, var(--maybe-bg), transparent 60%);
       border-color: rgba(255, 200, 120, .25);
+    }
+
+    .participant-item.status-unknown {
+      background: linear-gradient(90deg, var(--unknown-bg), transparent 60%);
+      border-color: rgba(150, 150, 170, .15);
     }
 
     .empty-state {
@@ -1141,13 +1154,22 @@
 
     async function init() {
       await loadSettings();
+
+      // Find the next upcoming meeting date
+      const now = new Date();
+      let upcomingDate = getSecondWednesday(currentDate.getFullYear(), currentDate.getMonth());
+
+      // If current month's meeting has passed, move to next month
+      if (upcomingDate < now) {
+        const nextMonth = currentDate.getMonth() === 11 ? 0 : currentDate.getMonth() + 1;
+        const nextYear = currentDate.getMonth() === 11 ? currentDate.getFullYear() + 1 : currentDate.getFullYear();
+        currentDate = new Date(nextYear, nextMonth, 1);
+        upcomingDate = getSecondWednesday(nextYear, nextMonth);
+      }
+
       renderCalendar();
       updateICalLink();
-      
-      const secondWed = getSecondWednesday(currentDate.getFullYear(), currentDate.getMonth());
-      if (secondWed >= new Date()) {
-        await selectDate(secondWed);
-      }
+      await selectDate(upcomingDate);
     }
 
     init();
